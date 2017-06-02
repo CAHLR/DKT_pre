@@ -53,9 +53,9 @@ class DKTnet():
         ## masked layer to skip timestamp (t) when all the values of input vector (x_t) are -1 
         masked = (Masking(mask_value= -1, input_shape = (None, None, self.input_dim)))(x)
         lstm_out = SimpleRNN(self.hidden_layer_size, input_shape = (None, None, self.input_dim), return_sequences = True)(masked)
-        lstm_out = Dense(self.input_dim_order, input_shape = (None, None, self.hidden_layer_size), activation='sigmoid')(lstm_out)
+        dense_out = Dense(self.input_dim_order, input_shape = (None, None, self.hidden_layer_size), activation='sigmoid')(lstm_out)
         y_order = Input(batch_shape = (None, None, self.input_dim_order), name = 'y_order')
-        merged = multiply([lstm_out, y_order])
+        merged = multiply([dense_out, y_order])
 
         def reduce_dim(x):
             x = K.max(x, axis = 2, keepdims = True)
@@ -69,7 +69,7 @@ class DKTnet():
         
         earlyStopping = EarlyStopping(monitor='loss', patience=2, verbose=0, mode='auto')
         reduced = Lambda(reduce_dim, output_shape = reduce_dim_shape)(merged)
-        model = Model(inputs=[x,y_order], outputs=merged)
+        model = Model(inputs=[x,y_order], outputs=reduced)
         model.compile( optimizer = 'rmsprop',
                         loss = 'binary_crossentropy',
                         metrics=['accuracy'])
