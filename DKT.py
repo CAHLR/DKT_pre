@@ -11,12 +11,47 @@ from keras import backend as K
 from theano import tensor as T
 from theano import config
 from theano import printing
+from theano import function
 from keras.layers import Lambda
 import theano
 import numpy as np
 import pdb
+from math import sqrt
+from keras.callbacks import Callback
+
+"""
+To calculate and print the average rmse on the validation set after every epoch
+"""
+class TestCallback(Callback):
+    
+    def __init__(self, test_data):
+        self.x_test, self.y_test_order, self.y_test = test_data
+
+    def on_epoch_end(self, epoch, logs={}):
+        
+        y_pred = self.model.predict([self.x_test, self.y_test_order])
+        avg_rmse = self.rmse_masking(self.y_test, y_pred)
+        print('\nTesting avg_rmse: {}\n'.format(avg_rmse))
+        
+    def rmse_masking(self, y_true, y_pred):
+        
+        mask_matrix = np.sum(self.y_test_order, axis=2).flatten()
+        num_users, max_responses = np.shape(self.x_test)[0], np.shape(self.x_test)[1]
+        y_pred = y_pred.flatten()
+        y_true = y_true.flatten()
+        rmse = [] 
+        for user in range(num_users): 
+            diff_sq, response = 0, 0
+            for i in range(user * max_responses, (user + 1) * max_responses):
+                if mask_matrix[i] == 0:
+                    break
+                diff_sq += (y_true[i] - y_pred[i]) ** 2 
+                response += 1
+            rmse.append(sqrt(diff_sq/float(response)))   
+        return sum(rmse)/float(len(rmse))    
 
 class DKTnet():
+    
     def __init__(self, input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
         x_train, y_train, y_train_order,
         x_test=[], y_test=[], y_test_order=[]):
@@ -43,16 +78,17 @@ class DKTnet():
         self.x_test = x_test
         self.y_test = y_test
         self.y_test_order = y_test_order
+        
+        self.users = np.shape(x_train)[0]
+        self.validation_split = 0.2
         print ("Initialization Done")
-
+    
     def build(self):
         
         ## first layer for the input (x_t)
         x = Input(batch_shape = (None, None, self.input_dim), name='x')
-        
-        ## masked layer to skip timestamp (t) when all the values of input vector (x_t) are -1 
-        masked = (Masking(mask_value= -1, input_shape = (None, None, self.input_dim)))(x)
-        lstm_out = SimpleRNN(self.hidden_layer_size, input_shape = (None, None, self.input_dim), return_sequences = True)(masked)
+        # masked = (Masking(mask_value= -1, input_shape = (None, None, self.input_dim)))(x)
+        lstm_out = SimpleRNN(self.hidden_layer_size, input_shape = (None, None, self.input_dim), return_sequences = True)(x)
         dense_out = Dense(self.input_dim_order, input_shape = (None, None, self.hidden_layer_size), activation='sigmoid')(lstm_out)
         y_order = Input(batch_shape = (None, None, self.input_dim_order), name = 'y_order')
         merged = multiply([dense_out, y_order])
@@ -67,7 +103,7 @@ class DKTnet():
             print ("reduced_shape", shape)
             return tuple(shape)
         
-        earlyStopping = EarlyStopping(monitor='loss', patience=2, verbose=0, mode='auto')
+        earlyStopping = EarlyStopping(monitor='val_loss', patience=2, verbose=0, mode='auto')
         reduced = Lambda(reduce_dim, output_shape = reduce_dim_shape)(merged)
         model = Model(inputs=[x,y_order], outputs=reduced)
         model.compile( optimizer = 'rmsprop',
@@ -92,7 +128,14 @@ class DKTnet():
         #print 'reduced',intermediate_output.shape
         #pdb.set_trace()
         
-        model.fit([self.x_train, self.y_train_order], self.y_train, batch_size = self.batch_size,epochs=self.epoch, callbacks = [earlyStopping], validation_split = 0.2, shuffle = True)
+        model.fit([self.x_train, self.y_train_order], self.y_train, batch_size = self.batch_size, \
+                  epochs=self.epoch, \
+                  callbacks = [ earlyStopping, \
+                                TestCallback((self.x_train[int((1-self.validation_split)*self.users):], \
+                                self.y_train_order[int((1-self.validation_split)*self.users):], \
+                                self.y_train[int((1-self.validation_split)*self.users):]))  ], \
+                  validation_split = self.validation_split, shuffle = True) 
+        
         #for layer in model.layers:
         #    weights = layer.get_weights()
         #    print (weights)
@@ -101,6 +144,6 @@ class DKTnet():
         #validation_data=([self.x_train,self.y_train_order],self.y_train))
         #score = model.evaluate([self.x_test, self.y_test_order], self.y_test, batch_size= self.batch_size)
         #print (score)
-        # pirint (model.predict([self.x_train, self.y_train_order]))
+        # print (model.predict([self.x_train, self.y_train_order]))
         
         
