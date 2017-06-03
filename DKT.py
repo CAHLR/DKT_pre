@@ -47,7 +47,8 @@ class TestCallback(Callback):
                     break
                 diff_sq += (y_true[i] - y_pred[i]) ** 2 
                 response += 1
-            rmse.append(sqrt(diff_sq/float(response)))   
+            if response != 0:
+                rmse.append(sqrt(diff_sq/float(response)))   
         return sum(rmse)/float(len(rmse))    
 
 class DKTnet():
