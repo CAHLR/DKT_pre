@@ -20,11 +20,11 @@ class Histories(keras.callbacks.Callback):
         y_pred = self.model.predict(self.validation_data[0:2])
         yp = []
         yt = []
-        print type(yt)
-        print type(yp)
+        print (type(yt))
+        print (type(yp))
 
-        for i in xrange(len(self.validation_data[1])):
-            for j in xrange(len(self.validation_data[1][i])):
+        for i in  range(len(self.validation_data[1])):
+            for j in  range(len(self.validation_data[1][i])):
                 if(self.validation_data[2][i][j][0]) == -1:
                     break
                 else:
@@ -38,12 +38,12 @@ class Histories(keras.callbacks.Callback):
                     #yt.append([self.validation_data[2][i][j][amax]])
         #pdb.set_trace()
         tmp_auc = roc_auc_score(yt,yp)
-        print "yt",len(yt)
-        print "yp",len(yp)
+        print ("yt",len(yt))
+        print ("yp",len(yp))
         #auc = roc_auc_score(yt[0], yp[0])
         self.aucs.append(tmp_auc)
-        print 'val-loss',logs.get('loss'), ' val-auc: ',tmp_auc
-        print '\n'
+        print ('val-loss',logs.get('loss'), ' val-auc: ',tmp_auc)
+        print ('\n')
 
         return
 

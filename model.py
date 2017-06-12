@@ -50,7 +50,7 @@ class DKTnet():
         def reduce_dim_shape(input_shape):
             shape = list(input_shape)
             shape[-1] = 1
-            print "reduced_shape",shape
+            print ("reduced_shape",shape)
             return tuple(shape)
 
         reduced = Lambda(reduce_dim,output_shape = reduce_dim_shape)(merged)
@@ -69,13 +69,13 @@ class DKTnet():
                         #1value y_train
 
         #histories = my_callbacks.Histories()
-        #print "x_test",np.shape(self.x_test)
-        #print "y_test_order",np.shape(self.y_test_order)
+        #print ("x_test",np.shape(self.x_test))
+        #print ("y_test_order",np.shape(self.y_test_order))
 
         #layer_name = 'my_layer'
         #intermediate_layer_model = Model(inputs = [x,y_order],outputs = reduced)
         #intermediate_output = intermediate_layer_model.predict([self.x_train,self.y_train_order])
-        #print 'reduced',intermediate_output.shape
+        #print ('reduced',intermediate_output.shape)
         #pdb.set_trace()
         model.fit([self.x_train, self.y_train_order], self.y_train, batch_size = self.batch_size,epochs=self.epoch, callbacks =
                 [histories],

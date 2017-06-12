@@ -2,7 +2,7 @@
 import csv
 import numpy as np
 import utils
-
+import pdb
 max_train = None
 max_steps = None
 
@@ -12,7 +12,7 @@ class DataAssistMatrix():
         #training process
         root = '../data/assistments/'
         trainPath = root + 'builder_train.csv'
-        csvFile = file(trainPath, 'rb')
+        csvFile = open(trainPath, 'r')
         csvInput = csv.reader(csvFile)
         count = 0
         trainData = []
@@ -30,7 +30,7 @@ class DataAssistMatrix():
         while(True):
             student = self.loadStudent(csvInput)
             if student == None:
-                print 'Load student failed !'
+                print ('Load student failed !')
                 break
             if(student.n_answers >= 2 and student.n_answers<=self.longest):
                 trainData.append(student)
@@ -39,13 +39,13 @@ class DataAssistMatrix():
             #if student.n_answers > self.train_longest:
              #   self.train_longest = student.n_answers
 
-	    totalAnswers = totalAnswers + student.n_answers
+            totalAnswers = totalAnswers + student.n_answers
         self.trainData = trainData
         csvFile.close()
 
         #testing processing
         testPath = root + 'builder_test.csv'
-        csvFile = file(testPath,'rb')
+        csvFile = open(testPath,'r')
         csvInput = csv.reader(csvFile)
 
         count = 0
@@ -54,7 +54,7 @@ class DataAssistMatrix():
         while(True):
             student = self.loadStudent(csvInput)
             if student == None:
-                print 'Load student failed or finished'
+                print ('Load student failed or finished')
                 break
             if(student.n_answers >= 2 and student.n_answers<=self.longest):
                 testData.append(student)
@@ -68,23 +68,24 @@ class DataAssistMatrix():
         print('total answers', totalAnswers)
         #print('longest train data is ', self.train_longest)
         #print('longest test data is ',self.test_longest)
-        print 'longest data is',self.longest
+        print ('longest data is',self.longest)
         print('max questionsID', self.max_questionID)
 
 
     def loadStudent(self, csvInput):
         try:
-            nStep = utils.inputStudent(csvInput).next()
-            questionsID = utils.inputStudent(csvInput).next()
-            correct = utils.inputStudent(csvInput).next()
+            nStep = next(utils.inputStudent(csvInput))
+            questionsID = next(utils.inputStudent(csvInput))
+            correct = next(utils.inputStudent(csvInput))
         except:
+            print ('execption loadStudent')
             return None
         # if nStep == None or questionsID == None or correct == None:
         #     return None
         n = int(nStep[0])
         if(max_steps != None):
             n = max_steps
-        for i in xrange(len(questionsID)):
+        for i in  range(len(questionsID)):
             if questionsID[i] not in self.questions:
                 self.questions.append(questionsID[i])
                 self.n_questions = self.n_questions + 1
@@ -98,14 +99,14 @@ class student():
         self.n_answers = n
         self.questionsID = np.zeros(n,int)
         self.correct = np.zeros(n,int)
-        for i in xrange(n):
+        for i in  range(n):
             if i > n:
                 break
-            self.questionsID[i] = int(questionsID[i]) # we don't plus 1 as the origin code
-        for i in xrange(n):
+            self.questionsID[i] = int(float(questionsID[i])) # we don't plus 1 as the origin code
+        for i in  range(n):
             if i > n:
                 break
-            self.correct[i] = correct[i]
+            self.correct[i] = int(float(correct[i]))
 
 
 

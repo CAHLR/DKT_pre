@@ -23,7 +23,7 @@ class DataAssistMatrix():
         self.questions = []
         self.n_questions = 0
         totalAnswers = 0
-        
+
         # while(True):
         #     student = self.loadStudent(csvInput)
         #     if student == None:
@@ -83,7 +83,7 @@ class DataAssistMatrix():
             for i in xrange(len(questionsID)):
                 if questionsID[i] not in self.questions:
                     self.questions.append(questionsID[i])
-                    self.n_questions = self.n_questions + 1           
+                    self.n_questions = self.n_questions + 1
             Stu = student(n,questionsID,correct)
             if Stu == None:
                 print 'Load student failed !'
