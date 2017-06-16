@@ -9,7 +9,8 @@ from keras.layers import LSTM
 from keras.layers import Merge
 from theano import tensor as T
 from dataAssist import DataAssistMatrix
-from model import DKTnet
+#from model import DKTnet
+from DKT import DKTnet
 from keras.preprocessing import sequence
 import pdb
 data = DataAssistMatrix()
@@ -17,7 +18,8 @@ data = DataAssistMatrix()
 batch_size = 64
 input_dim_order =  int(data.max_questionID + 1)
 input_dim = 2 * input_dim_order
-epoch = 1000
+epoch = 100
+hidden_layer_size = 512
 # x_train =
 # y_train =
 # y_train_order =
@@ -112,7 +114,10 @@ x_test = x_test[:,:-1,:]
 y_test = y_test[:,1:,:]
 y_test_order = y_test_order[:,1:,:]
 #pdb.set_trace()
-model = DKTnet(input_dim, input_dim_order,batch_size, epoch,
-        x_train, y_train, y_train_order,
-        x_test, y_test, y_test_order)
+#model = DKTnet(input_dim, input_dim_order,batch_size, epoch,
+        #x_train, y_train, y_train_order,
+        #x_test, y_test, y_test_order)
+model = DKTnet(input_dim, input_dim_order, hidden_layer_size,
+        batch_size, epoch, np.array(x_train), np.array(y_train), np.array(y_train_order))
+
 model.build()
