@@ -52,7 +52,8 @@ for student in data.trainData:
     for i in  range(data.longest-student.n_answers):
         x_single_train[:,student.n_answers + i] = -1
         y_single_train[:,student.n_answers + i] = -1
-        y_single_train_order[:,student.n_answers + i] = -1
+        #notice that the padding value of order is still zero.
+        y_single_train_order[:,student.n_answers + i] = 0
     x_single_train = np.transpose(x_single_train)
     y_single_train = np.transpose(y_single_train)
     y_single_train_order = np.transpose(y_single_train_order)
@@ -96,7 +97,8 @@ for student in data.testData:
     for i in  range(data.longest-student.n_answers):
         x_single_test[:,student.n_answers + i] = -1
         y_single_test[:,student.n_answers + i] = -1
-        y_single_test_order[:,student.n_answers + i] = -1
+        #notice that the padding value of order is still zero.
+        y_single_test_order[:,student.n_answers + i] = 0
     x_single_test = np.transpose(x_single_test)
     y_single_test = np.transpose(y_single_test)
     y_single_test_order = np.transpose(y_single_test_order)

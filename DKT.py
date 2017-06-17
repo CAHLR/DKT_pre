@@ -30,8 +30,10 @@ class TestCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
 
         y_pred = self.model.predict([self.x_test, self.y_test_order])
-        avg_rmse = self.rmse_masking(self.y_test, y_pred)
+        avg_rmse, avg_acc = self.rmse_masking(self.y_test, y_pred)
         print('\nTesting avg_rmse: {}\n'.format(avg_rmse))
+        print('\nTesting avg_acc: {}\n'.format(avg_acc))
+
 
     def rmse_masking(self, y_true, y_pred):
 
@@ -40,17 +42,29 @@ class TestCallback(Callback):
         y_pred = y_pred.flatten()
         y_true = y_true.flatten()
         rmse = []
+        acc = []
+        padding_num = 0
         for user in range(num_users):
-            diff_sq, response = 0, 0
+            diff_sq, response, correct = 0, 0, 0
             for i in range(user * max_responses, (user + 1) * max_responses):
                 if mask_matrix[i] == 0:
                     break
-                diff_sq += (y_true[i] - y_pred[i]) ** 2
+                if y_true[i] == 1 and y_pred[i] >0.5:
+                    correct += 1
+                elif y_true[i] == 0 and y_pred[i] < 0.5:
+                    correct += 1
+                elif y_true[i] == -1:
+                    padding_num += 1
                 response += 1
+                diff_sq += (y_true[i] - y_pred[i]) ** 2
             if response != 0:
+                acc.append(correct/float(response))
                 rmse.append(sqrt(diff_sq/float(response)))
-        return sum(rmse)/float(len(rmse))
-
+        print ('padding_num',padding_num)
+        try:
+            return sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))
+        except:
+            pdb.set_trace()
 class DKTnet():
 
     def __init__(self, input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
