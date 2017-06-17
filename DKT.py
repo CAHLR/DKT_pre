@@ -88,8 +88,8 @@ class DKTnet():
 
         ## first layer for the input (x_t)
         x = Input(batch_shape = (None, None, self.input_dim), name='x')
-        # masked = (Masking(mask_value= -1, input_shape = (None, None, self.input_dim)))(x)
-        lstm_out = SimpleRNN(self.hidden_layer_size, input_shape = (None, None, self.input_dim), return_sequences = True)(x)
+        masked = (Masking(mask_value= -1, input_shape = (None, None, self.input_dim)))(x)
+        lstm_out = SimpleRNN(self.hidden_layer_size, input_shape = (None, None, self.input_dim), return_sequences = True)(masked)
         dense_out = Dense(self.input_dim_order, input_shape = (None, None, self.hidden_layer_size), activation='sigmoid')(lstm_out)
         y_order = Input(batch_shape = (None, None, self.input_dim_order), name = 'y_order')
         merged = multiply([dense_out, y_order])
@@ -133,8 +133,8 @@ class DKTnet():
                   epochs=self.epoch, \
                   callbacks = [ earlyStopping, \
                                 TestCallback((self.x_train[int((1-self.validation_split)*self.users):], \
-                                self.y_train_order[int((1-self.validation_split)*self.users):], \
-                                self.y_train[int((1-self.validation_split)*self.users):]))  ], \
+                                self.y_train_order[ int((1-self.validation_split)*self.users):], \
+                                self.y_train[ int((1-self.validation_split)*self.users):]))], \
                   validation_split = self.validation_split, shuffle = True)
 
         #for layer in model.layers:
