@@ -3,6 +3,7 @@ import csv
 import numpy as np
 import utils
 import pdb
+import pickle
 max_train = None
 max_steps = None
 
@@ -10,8 +11,8 @@ class DataAssistMatrix():
     def __init__(self):
         print('Loading data...')
         #training process
-        root = '../data/assistments/'
-        trainPath = root + 'builder_train.csv'
+        root = '../'
+        trainPath = root + 'processed_data.csv'
         csvFile = open(trainPath, 'r')
         csvInput = csv.reader(csvFile)
         count = 0
@@ -34,43 +35,11 @@ class DataAssistMatrix():
                 break
             if(student.n_answers >= 2 and student.n_answers<=self.longest):
                 trainData.append(student)
-            #if len(trainData) % 100 == 0:
-                #print 'The length of train data is now ',trainData
-            #if student.n_answers > self.train_longest:
-             #   self.train_longest = student.n_answers
-
+            if len(trainData) % 100 == 0:
+                print ('The length of train data is now ',len(trainData))
             totalAnswers = totalAnswers + student.n_answers
         self.trainData = trainData
         csvFile.close()
-
-        #testing processing
-        testPath = root + 'builder_test.csv'
-        csvFile = open(testPath,'r')
-        csvInput = csv.reader(csvFile)
-
-        count = 0
-        testData = []
-        self.questions = []
-        while(True):
-            student = self.loadStudent(csvInput)
-            if student == None:
-                print ('Load student failed or finished')
-                break
-            if(student.n_answers >= 2 and student.n_answers<=self.longest):
-                testData.append(student)
-            #if len(testData) % 100 == 0:
-                #print 'The length of test data is now ',testData
-            #if student.n_answers > self.test_longest:
-                #self.test_longest = student.n_answers
-            totalAnswers = totalAnswers + student.n_answers
-        self.testData = testData
-        csvFile.close()
-        print('total answers', totalAnswers)
-        #print('longest train data is ', self.train_longest)
-        #print('longest test data is ',self.test_longest)
-        print ('longest data is',self.longest)
-        print('max questionsID', self.max_questionID)
-
 
     def loadStudent(self, csvInput):
         try:
@@ -108,6 +77,10 @@ class student():
                 break
             self.correct[i] = int(float(correct[i]))
 
-
+fn = 'data.pkl'
+data = DataAssistMatrix()
+with open(fn, 'wb') as f:                     # open file with write-mode
+    picklestring = pickle.dump(data, f)   # serialize and save object
+    print("pkl files saved !")
 
 
