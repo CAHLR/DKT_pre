@@ -13,7 +13,13 @@ from dataAssist import DataAssistMatrix
 from DKT import DKTnet
 from keras.preprocessing import sequence
 import pdb
-data = DataAssistMatrix()
+import pickle
+from dataAssist import DataAssistMatrix, student
+
+fn = 'data.pkl'
+with open(fn, 'rb') as f:
+    data = pickle.load(f)
+    print("Load students\' data succeeded!")
 
 batch_size = 64
 input_dim_order =  int(data.max_questionID + 1)
