@@ -26,12 +26,13 @@ import my_callbacks
 import pickle
 from dataAssist import DataAssistMatrix, student
 
-fn = 'data.pkl'
-with open(fn, 'rb') as f:
-    data = pickle.load(f)
-    print("Load students\' data succeeded!")
-
-batch_size = 64
+# fn = 'data.pkl'
+# with open(fn, 'rb') as f:
+#     data = pickle.load(f)
+#     print("Load students\' data succeeded!")
+data = DataAssistMatrix()
+data.build()
+batch_size = 2
 input_dim_order =  int(data.max_questionID + 1)
 input_dim = 2 * input_dim_order
 epoch = 100
@@ -59,8 +60,7 @@ def batch_training(x_train, y_train, y_train_order):
     model.compile( optimizer = 'rmsprop',
                     loss = 'binary_crossentropy',
                     metrics=['accuracy'])
-    model.train_on_batch([x_train, y_train_order], y_train,callbacks =
-            [histories])
+    model.train_on_batch([x_train, y_train_order], y_train)
     # model.fit([x_train, y_train_order], y_train, batch_size = batch_size,epochs=epoch, callbacks =
     #         [histories],
     # validation_split = 0.2, shuffle = True)
@@ -72,6 +72,7 @@ y_train = []
 y_train_order = []
 num_student = 0
 for student in data.trainData:
+    print (student.n_answers)
     num_student += 1
     print (num_student)
     if num_student % batch_size == 0:
@@ -84,7 +85,7 @@ for student in data.trainData:
         y_train = y_train[:,1:,:]
         y_train_order = y_train_order[:,1:,:]
 
-        batch_training(x_train, y_train, y_train_order)
+        #batch_training(x_train, y_train, y_train_order)
 
         x_train = []
         y_train = []
@@ -96,14 +97,14 @@ for student in data.trainData:
 
     for i in range(student.n_answers):
         if student.correct[i] == 1.: # if correct
-            x_single_train[student.questionsID[i]*2-1, i] = 1.
+            x_single_train[student.ID[i]*2-1, i] = 1.
         elif student.correct[i] == 0.: # if wrong
-            x_single_train[student.questionsID[i]*2, i] = 1.
+            x_single_train[student.ID[i]*2, i] = 1.
         else:
             print (student.correct[i])
             print ("wrong length with student's n_answers or correct")
         y_single_train[0, i] = student.correct[i]
-        y_single_train_order[student.questionsID[i], i] = 1.
+        y_single_train_order[student.ID[i], i] = 1.
         
     for i in  range(data.longest-student.n_answers):
         x_single_train[:,student.n_answers + i] = -1
@@ -117,6 +118,7 @@ for student in data.trainData:
     y_train.append(y_single_train)
     y_train_order.append(y_single_train_order)
 print ("train num students", num_student)
+pdb.set_trace()
 
 
 

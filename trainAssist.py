@@ -22,7 +22,7 @@ with open(fn, 'rb') as f:
     print("Load students\' data succeeded!")
 
 batch_size = 64
-input_dim_order =  int(data.max_questionID + 1)
+input_dim_order =  int(data.max_questionID + 1) #consider whether we need plus 1
 input_dim = 2 * input_dim_order
 epoch = 100
 hidden_layer_size = 512
@@ -45,16 +45,16 @@ for student in data.trainData:
     y_single_train = np.zeros([1, data.longest])
     y_single_train_order = np.zeros([input_dim_order, data.longest])
 
-    for i in  range(student.n_answers):
+    for i in range(student.n_answers):
         if student.correct[i] == 1.: # if correct
-            x_single_train[student.questionsID[i]*2-1, i] = 1.
+            x_single_train[student.ID[i]*2-1, i] = 1.
         elif student.correct[i] == 0.: # if wrong
-            x_single_train[student.questionsID[i]*2, i] = 1.
+            x_single_train[student.ID[i]*2, i] = 1.
         else:
             print (student.correct[i])
             print ("wrong length with student's n_answers or correct")
         y_single_train[0, i] = student.correct[i]
-        y_single_train_order[student.questionsID[i], i] = 1.
+        y_single_train_order[student.ID[i], i] = 1.
     for i in  range(data.longest-student.n_answers):
         x_single_train[:,student.n_answers + i] = -1
         y_single_train[:,student.n_answers + i] = -1
@@ -92,14 +92,14 @@ for student in data.testData:
 
     for i in  range(student.n_answers):
         if student.correct[i] == 1.: # if correct
-            x_single_test[student.questionsID[i]*2-1, i] = 1.
+            x_single_test[student.ID[i]*2-1, i] = 1.
         elif student.correct[i] == 0.: # if wrong
-            x_single_test[student.questionsID[i]*2, i] = 1.
+            x_single_test[student.ID[i]*2, i] = 1.
         else:
             print (student.correct[i])
             print ("wrong length with student's n_answers or correct")
         y_single_test[0, i] = student.correct[i]
-        y_single_test_order[student.questionsID[i], i] = 1.
+        y_single_test_order[student.ID[i], i] = 1.
     for i in  range(data.longest-student.n_answers):
         x_single_test[:,student.n_answers + i] = -1
         y_single_test[:,student.n_answers + i] = -1
