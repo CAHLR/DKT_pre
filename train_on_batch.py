@@ -38,32 +38,34 @@ input_dim = 2 * input_dim_order
 epoch = 100
 hidden_layer_size = 512
 
-def batch_training(x_train, y_train, y_train_order):
-    x = Input(batch_shape=(None,None, input_dim), name='x')
-    y_order = Input(shape = (None,input_dim_order), name = 'y_order')
-    masked = (Masking(mask_value= -1,input_shape=(None,None,input_dim)))(x)
-    lstm_out = LSTM(input_dim_order, input_shape = (None, None, input_dim), return_sequences = True)(masked)
-    merged=merge([lstm_out,y_order],mode='mul')
+# def batch_training(x_train, y_train, y_train_order):
+#     x = Input(batch_shape=(None,None, input_dim), name='x')
+#     y_order = Input(shape = (None,input_dim_order), name = 'y_order')
+#     masked = (Masking(mask_value= -1,input_shape=(None,None,input_dim)))(x)
+#     lstm_out = LSTM(input_dim_order, input_shape = (None, None, input_dim), return_sequences = True)(masked)
+#     #merged=merge([lstm_out,y_order],mode='mul')
 
-    def reduce_dim(x):
-        x = K.max(x,axis = 2, keepdims = True)
-        return x
-    def reduce_dim_shape(input_shape):
-        shape = list(input_shape)
-        shape[-1] = 1
-        print ("reduced_shape",shape)
-        return tuple(shape)
+#     def reduce_dim(x):
+#         x = K.max(x,axis = 2, keepdims = True)
+#         return x
+#     def reduce_dim_shape(input_shape):
+#         shape = list(input_shape)
+#         shape[-1] = 1
+#         print ("reduced_shape",shape)
+#         return tuple(shape)
 
-    reduced = Lambda(reduce_dim,output_shape = reduce_dim_shape)(merged)
-    model = Model(inputs=[x,y_order],outputs=reduced)
-    histories = my_callbacks.Histories()
-    model.compile( optimizer = 'rmsprop',
-                    loss = 'binary_crossentropy',
-                    metrics=['accuracy'])
-    model.train_on_batch([x_train, y_train_order], y_train)
-    # model.fit([x_train, y_train_order], y_train, batch_size = batch_size,epochs=epoch, callbacks =
-    #         [histories],
-    # validation_split = 0.2, shuffle = True)
+#     #reduced = Lambda(reduce_dim,output_shape = reduce_dim_shape)(merged)
+#     model = Model(inputs = [x,y_order],outputs = masked)
+#     #model = Model(inputs=[x,y_order],outputs=reduced)
+#     histories = my_callbacks.Histories()
+#     model.compile( optimizer = 'rmsprop',
+#                     loss = 'binary_crossentropy',
+#                     metrics=['accuracy'])
+#     model.train_on_batch([x_train, y_train_order], y_train)
+#     pdb.set_trace()
+#     # model.fit([x_train, y_train_order], y_train, batch_size = batch_size,epochs=epoch, callbacks =
+#     #         [histories],
+#     # validation_split = 0.2, shuffle = True)
 
 
 '''Training part starts from now'''
@@ -72,9 +74,9 @@ y_train = []
 y_train_order = []
 num_student = 0
 for student in data.trainData:
-    print (student.n_answers)
+    print ('student.n_answers ', student.n_answers)
     num_student += 1
-    print (num_student)
+    # print (num_student)
     if num_student % batch_size == 0:
         print ("Training when num student is",num_student)
         x_train = np.array(x_train)
@@ -84,8 +86,9 @@ for student in data.trainData:
         x_train = x_train[:,:-1,:]
         y_train = y_train[:,1:,:]
         y_train_order = y_train_order[:,1:,:]
-
-        #batch_training(x_train, y_train, y_train_order)
+        model = DKTnet(input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
+            x_train, y_train, y_train_order)
+        model.train_on_batch()
 
         x_train = []
         y_train = []
@@ -105,7 +108,7 @@ for student in data.trainData:
             print ("wrong length with student's n_answers or correct")
         y_single_train[0, i] = student.correct[i]
         y_single_train_order[student.ID[i], i] = 1.
-        
+
     for i in  range(data.longest-student.n_answers):
         x_single_train[:,student.n_answers + i] = -1
         y_single_train[:,student.n_answers + i] = -1

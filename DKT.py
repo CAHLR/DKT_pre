@@ -65,6 +65,7 @@ class TestCallback(Callback):
             return sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))
         except:
             pdb.set_trace()
+
 class DKTnet():
 
     def __init__(self, input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
@@ -97,6 +98,34 @@ class DKTnet():
         self.users = np.shape(x_train)[0]
         self.validation_split = 0.2
         print ("Initialization Done")
+
+    def train_on_batch(self):
+
+        ## first layer for the input (x_t)
+        x = Input(batch_shape = (None, None, self.input_dim), name='x')
+        masked = (Masking(mask_value= -1, input_shape = (None, None, self.input_dim)))(x)
+        lstm_out = SimpleRNN(self.hidden_layer_size, input_shape = (None, None, self.input_dim), return_sequences = True)(masked)
+        dense_out = Dense(self.input_dim_order, input_shape = (None, None, self.hidden_layer_size), activation='sigmoid')(lstm_out)
+        y_order = Input(batch_shape = (None, None, self.input_dim_order), name = 'y_order')
+        merged = multiply([dense_out, y_order])
+
+        def reduce_dim(x):
+            x = K.max(x, axis = 2, keepdims = True)
+            return x
+
+        def reduce_dim_shape(input_shape):
+            shape = list(input_shape)
+            shape[-1] = 1
+            print ("reduced_shape", shape)
+            return tuple(shape)
+
+        earlyStopping = EarlyStopping(monitor='val_loss', patience=2, verbose=0, mode='auto')
+        reduced = Lambda(reduce_dim, output_shape = reduce_dim_shape)(merged)
+        model = Model(inputs=[x,y_order], outputs=reduced)
+        model.compile( optimizer = 'rmsprop',
+                        loss = 'binary_crossentropy',
+                        metrics=['accuracy'])
+        model.train_on_batch([self.x_train, self.y_train_order], self.y_train)
 
     def build(self):
 
@@ -150,15 +179,5 @@ class DKTnet():
                                 self.y_train_order[ int((1-self.validation_split)*self.users):], \
                                 self.y_train[ int((1-self.validation_split)*self.users):]))], \
                   validation_split = self.validation_split, shuffle = True)
-
-        #for layer in model.layers:
-        #    weights = layer.get_weights()
-        #    print (weights)
-        #for layer in model.layers:
-        #        print (np.shape(layer.get_weights()))
-        #validation_data=([self.x_train,self.y_train_order],self.y_train))
-        #score = model.evaluate([self.x_test, self.y_test_order], self.y_test, batch_size= self.batch_size)
-        #print (score)
-        # print (model.predict([self.x_train, self.y_train_order]))
 
 
