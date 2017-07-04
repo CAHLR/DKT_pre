@@ -11,7 +11,7 @@ class DataAssistMatrix():
     def __init__(self):
         print('Build a DataAssistMatrix')
 
-        self.longest = 3
+        self.longest = 100
         self.questions = {}
         self.n_questions = 0 # new ID of questionsID, a dence one.
         self.max_questionID = 0
