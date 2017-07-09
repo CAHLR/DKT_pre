@@ -24,7 +24,7 @@ To calculate and print the average rmse on the validation set after every epoch
 """
 class TestCallback(Callback):
 
-    def __init__(self, test_data):
+    def __init__(self, test_data = [[],[],[]]):
         self.x_test, self.y_test_order, self.y_test = test_data
 
     def on_epoch_end(self, epoch, logs={}):
@@ -36,11 +36,12 @@ class TestCallback(Callback):
 
 
     def rmse_masking(self, y_true, y_pred):
-
         mask_matrix = np.sum(self.y_test_order, axis=2).flatten()
         num_users, max_responses = np.shape(self.x_test)[0], np.shape(self.x_test)[1]
-        y_pred = y_pred.flatten()
-        y_true = y_true.flatten()
+        #we want y_pred and y_true both to be matrix of 2 dim.
+        if len(y_pred.shape) and len(y_true.shape) == 3:
+            y_pred = y_pred.flatten()
+            y_true = y_true.flatten()
         rmse = []
         acc = []
         padding_num = 0
@@ -66,10 +67,48 @@ class TestCallback(Callback):
         except:
             pdb.set_trace()
 
+    def rmse_masking_on_batch(self, y_true, y_pred, y_order):
+        num_users, max_responses = np.shape(y_order)[0], np.shape(y_order)[1]
+        mask_matrix = np.sum(y_order, axis=2).flatten()
+        #we want y_pred and y_true both to be matrix of 2 dim.
+        if len(y_pred.shape) and len(y_true.shape) == 3:
+            y_pred = y_pred.flatten()
+            y_true = y_true.flatten()
+        rmse = []
+        acc = []
+        padding_num = 0
+        for user in range(num_users):
+            diff_sq, response, correct = 0, 0, 0
+            for i in range(user * max_responses, (user + 1) * max_responses):
+                if mask_matrix[i] == 0:
+                    break
+                if y_true[i] == 1 and y_pred[i] >0.5:
+                    correct += 1
+                elif y_true[i] == 0 and y_pred[i] < 0.5:
+                    correct += 1
+                elif y_true[i] == -1:
+                    padding_num += 1
+                response += 1
+                diff_sq += (y_true[i] - y_pred[i]) ** 2
+            if response != 0:
+                acc.append(correct/float(response))
+                rmse.append(sqrt(diff_sq/float(response)))
+        print ('padding_num',padding_num)
+        try:
+            return rmse, acc
+            # return sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))
+        except:
+            pdb.set_trace()
+
+
+
+
+
+
 class DKTnet():
 
     def __init__(self, input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
-        x_train, y_train, y_train_order,
+        x_train=[], y_train=[], y_train_order=[],
         x_test=[], y_test=[], y_test_order=[]):
 
         ## input dim is the dimension of the input at one timestamp (dimension of x_t)
@@ -99,7 +138,7 @@ class DKTnet():
         self.validation_split = 0.2
         print ("Initialization Done")
 
-    def train_on_batch(self):
+    def build_train_on_batch(self):
 
         ## first layer for the input (x_t)
         x = Input(batch_shape = (None, None, self.input_dim), name='x')
@@ -121,11 +160,17 @@ class DKTnet():
 
         earlyStopping = EarlyStopping(monitor='val_loss', patience=2, verbose=0, mode='auto')
         reduced = Lambda(reduce_dim, output_shape = reduce_dim_shape)(merged)
-        model = Model(inputs=[x,y_order], outputs=reduced)
-        model.compile( optimizer = 'rmsprop',
+        self.model = Model(inputs=[x,y_order], outputs=reduced)
+        self.model.compile( optimizer = 'rmsprop',
                         loss = 'binary_crossentropy',
                         metrics=['accuracy'])
-        model.train_on_batch([self.x_train, self.y_train_order], self.y_train)
+
+    def train_on_batch(self, x_train, y_train, y_train_order):
+        self.model.train_on_batch([x_train, y_train_order], y_train)
+
+    def predict(self, x_val, y_val_order):
+        y_pred = self.model.predict([x_val,y_val_order])
+        return y_pred
 
     def build(self):
 
