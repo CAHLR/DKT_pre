@@ -1,4 +1,4 @@
-# coding: utf-8
+ # coding: utf-8
 import numpy as np
 import csv
 import utils
@@ -19,109 +19,176 @@ import numpy as np
 import utils
 import my_callbacks
 import pdb
-from DKT import DKTnet
+from DKT import *
 from keras.preprocessing import sequence
 import pdb
 import my_callbacks
 import pickle
 from dataAssist import DataAssistMatrix, student
+import random
+import sys
 
-# fn = 'data.pkl'
-# with open(fn, 'rb') as f:
-#     data = pickle.load(f)
-#     print("Load students\' data succeeded!")
 data = DataAssistMatrix()
 data.build()
-batch_size = 2
+batch_size = 16
 input_dim_order =  int(data.max_questionID + 1)
 input_dim = 2 * input_dim_order
-epoch = 100
+epoch = 10
 hidden_layer_size = 512
+validation_slpit = 0.2 #extract validation data from training data
 
-# def batch_training(x_train, y_train, y_train_order):
-#     x = Input(batch_shape=(None,None, input_dim), name='x')
-#     y_order = Input(shape = (None,input_dim_order), name = 'y_order')
-#     masked = (Masking(mask_value= -1,input_shape=(None,None,input_dim)))(x)
-#     lstm_out = LSTM(input_dim_order, input_shape = (None, None, input_dim), return_sequences = True)(masked)
-#     #merged=merge([lstm_out,y_order],mode='mul')
+validation_data = [] # sample validation data based on validation_split on every epoch
+train_data = []
 
-#     def reduce_dim(x):
-#         x = K.max(x,axis = 2, keepdims = True)
-#         return x
-#     def reduce_dim_shape(input_shape):
-#         shape = list(input_shape)
-#         shape[-1] = 1
-#         print ("reduced_shape",shape)
-#         return tuple(shape)
-
-#     #reduced = Lambda(reduce_dim,output_shape = reduce_dim_shape)(merged)
-#     model = Model(inputs = [x,y_order],outputs = masked)
-#     #model = Model(inputs=[x,y_order],outputs=reduced)
-#     histories = my_callbacks.Histories()
-#     model.compile( optimizer = 'rmsprop',
-#                     loss = 'binary_crossentropy',
-#                     metrics=['accuracy'])
-#     model.train_on_batch([x_train, y_train_order], y_train)
-#     pdb.set_trace()
-#     # model.fit([x_train, y_train_order], y_train, batch_size = batch_size,epochs=epoch, callbacks =
-#     #         [histories],
-#     # validation_split = 0.2, shuffle = True)
-
-
-'''Training part starts from now'''
-x_train = []
-y_train = []
-y_train_order = []
-num_student = 0
 for student in data.trainData:
-    print ('student.n_answers ', student.n_answers)
-    num_student += 1
-    # print (num_student)
-    if num_student % batch_size == 0:
-        print ("Training when num student is",num_student)
-        x_train = np.array(x_train)
-        y_train = np.array(y_train)
-        y_train_order = np.array(y_train_order)
+    if random.uniform(0,1)<validation_slpit:
+        validation_data.append(student)
+    else: train_data.append(student)
 
-        x_train = x_train[:,:-1,:]
-        y_train = y_train[:,1:,:]
-        y_train_order = y_train_order[:,1:,:]
-        model = DKTnet(input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
-            x_train, y_train, y_train_order)
-        model.train_on_batch()
+print('The total size of raw data is: ', sys.getsizeof(data.trainData))
+data.trainData = [] # To save memory.
 
-        x_train = []
-        y_train = []
-        y_train_order = []
+DKTmodel = DKTnet(input_dim, input_dim_order, hidden_layer_size, batch_size, epoch)
+DKTmodel.build_train_on_batch()
 
-    x_single_train = np.zeros([input_dim, data.longest])
-    y_single_train = np.zeros([1, data.longest])
-    y_single_train_order = np.zeros([input_dim_order, data.longest])
+for epo in range(epoch):
+    '''Initializing'''
+    x_train = []
+    y_train = []
+    y_train_order = []
+    num_student = 0 # num of TRAINING student in each epoch
 
-    for i in range(student.n_answers):
-        if student.correct[i] == 1.: # if correct
-            x_single_train[student.ID[i]*2-1, i] = 1.
-        elif student.correct[i] == 0.: # if wrong
-            x_single_train[student.ID[i]*2, i] = 1.
-        else:
-            print (student.correct[i])
-            print ("wrong length with student's n_answers or correct")
-        y_single_train[0, i] = student.correct[i]
-        y_single_train_order[student.ID[i], i] = 1.
+    print ('Now starts the ',epo,'th epoch')
 
-    for i in  range(data.longest-student.n_answers):
-        x_single_train[:,student.n_answers + i] = -1
-        y_single_train[:,student.n_answers + i] = -1
-        #notice that the padding value of order is still zero.
-        y_single_train_order[:,student.n_answers + i] = 0
-    x_single_train = np.transpose(x_single_train)
-    y_single_train = np.transpose(y_single_train)
-    y_single_train_order = np.transpose(y_single_train_order)
-    x_train.append(x_single_train)
-    y_train.append(y_single_train)
-    y_train_order.append(y_single_train_order)
-print ("train num students", num_student)
-pdb.set_trace()
+    '''Training part starts from now'''
+    for student in train_data:
+        num_student += 1
+        # print (num_student)
+        if num_student % batch_size == 0:
+            print ("Training when num student is",num_student)
+            x_train = np.array(x_train)
+            y_train = np.array(y_train)
+            y_train_order = np.array(y_train_order)
+
+            x_train = x_train[:,:-1,:]
+            y_train = y_train[:,1:,:]
+            y_train_order = y_train_order[:,1:,:]
+            DKTmodel.train_on_batch(x_train, y_train, y_train_order)
+
+
+            x_train = []
+            y_train = []
+            y_train_order = []
+
+        x_single_train = np.zeros([input_dim, data.longest])
+        y_single_train = np.zeros([1, data.longest])
+        y_single_train_order = np.zeros([input_dim_order, data.longest])
+
+        for i in range(student.n_answers):
+            if student.correct[i] == 1.: # if correct
+                x_single_train[student.ID[i]*2-1, i] = 1.
+            elif student.correct[i] == 0.: # if wrong
+                x_single_train[student.ID[i]*2, i] = 1.
+            else:
+                print (student.correct[i])
+                print ("wrong length with student's n_answers or correct")
+            y_single_train[0, i] = student.correct[i]
+            y_single_train_order[student.ID[i], i] = 1.
+
+        for i in  range(data.longest-student.n_answers):
+            x_single_train[:,student.n_answers + i] = -1
+            y_single_train[:,student.n_answers + i] = -1
+            #notice that the padding value of order is still zero.
+            y_single_train_order[:,student.n_answers + i] = 0
+        x_single_train = np.transpose(x_single_train)
+        y_single_train = np.transpose(y_single_train)
+        y_single_train_order = np.transpose(y_single_train_order)
+        x_train.append(x_single_train)
+        y_train.append(y_single_train)
+        y_train_order.append(y_single_train_order)
+        
+    print ("train num students", num_student)
+    print ("validation num students", len(validation_data))
+
+
+
+    '''Validation part starts from now'''
+
+
+    x_val = []
+    y_val = []
+    y_val_order = []
+    num_val = 0
+    y_pred_total = []
+    y_true_total = []
+    rmse = []
+    acc = []
+    callback = TestCallback()
+    for student in validation_data:
+        num_val += 1
+        if num_val % batch_size == 0:
+            print ("Predicting when num student is",num_val)
+            x_val = np.array(x_val)
+            y_val = np.array(y_val)
+            y_val_order = np.array(y_val_order)
+
+            x_val = x_val[:,:-1,:]
+            y_val = y_val[:,1:,:]
+            y_val_order = y_val_order[:,1:,:]
+            # DKTmodel = DKTnet(input_dim, input_dim_order, hidden_layer_size, batch_size, epoch,
+            #     x_val, y_val, y_val_order)
+            # DKTmodel.train_on_batch()
+
+            y_pred = DKTmodel.predict(x_val,y_val_order)
+            y_pred.flatten()
+            y_val.flatten()
+            # y_val is y_true
+            tmp_rmse, tmp_acc = callback.rmse_masking_on_batch(y_val, y_pred, y_val_order)
+            rmse.append(tmp_rmse)
+            acc.append(tmp_acc)
+            # y_pred_total = y_pred_total + list(y_pred)
+            # y_true_total = y_true_total + list(y_val)
+
+
+            x_val = []
+            y_val = []
+            y_val_order = []
+
+        x_single_val = np.zeros([input_dim, data.longest])
+        y_single_val = np.zeros([1, data.longest])
+        y_single_val_order = np.zeros([input_dim_order, data.longest])
+
+        for i in range(student.n_answers):
+            if student.correct[i] == 1.: # if correct
+                x_single_val[student.ID[i]*2-1, i] = 1.
+            elif student.correct[i] == 0.: # if wrong
+                x_single_val[student.ID[i]*2, i] = 1.
+            else:
+                print (student.correct[i])
+                print ("wrong length with student's n_answers or correct")
+            y_single_val[0, i] = student.correct[i]
+            y_single_val_order[student.ID[i], i] = 1.
+
+        for i in  range(data.longest-student.n_answers):
+            x_single_val[:,student.n_answers + i] = -1
+            y_single_val[:,student.n_answers + i] = -1
+            #notice that the padding value of order is still zero.
+            y_single_val_order[:,student.n_answers + i] = 0
+        x_single_val = np.transpose(x_single_val)
+        y_single_val = np.transpose(y_single_val)
+        y_single_val_order = np.transpose(y_single_val_order)
+        x_val.append(x_single_val)
+        y_val.append(y_single_val)
+        y_val_order.append(y_single_val_order)
+    
+    avg_rmse, avg_acc = sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))
+    print('\nTesting avg_rmse: {}\n'.format(avg_rmse))
+    print('\nTesting avg_acc: {}\n'.format(avg_acc))
+
+
+
+
+
 
 
 

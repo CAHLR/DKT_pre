@@ -42,6 +42,8 @@ y_train_order = []
 num_student = 0
 for student in data.trainData:
     num_student += 1
+    if num_student % 200 ==0:
+        print (num_student,' ',num_student/46051.)
     x_single_train = np.zeros([input_dim, data.longest])
     y_single_train = np.zeros([1, data.longest])
     y_single_train_order = np.zeros([input_dim_order, data.longest])
@@ -68,6 +70,7 @@ for student in data.trainData:
     y_train.append(y_single_train)
     y_train_order.append(y_single_train_order)
 print ("train num students", num_student)
+pdb.set_trace()
 #x_train = sequence.pad_sequences(x_train, maxlen=1000, dtype='float64',padding='post', truncating='post', value=-1.)
 print ('preprocessing finished')
 x_train = np.array(x_train)

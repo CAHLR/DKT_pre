@@ -21,7 +21,7 @@ class DataAssistMatrix():
         print('Loading data...')
         #training process
         root = '../'
-        trainPath = root + 'processed_data.csv'
+        trainPath = root + 'processed_skill.csv'
         # trainPath = root + 'data/assistments/builder_train.csv'
         csvFile = open(trainPath, 'r')
         csvInput = csv.reader(csvFile)
@@ -51,7 +51,6 @@ class DataAssistMatrix():
         self.trainData = trainData
         self.max_questionID = self.n_questions # because of dence ID
         print ('The num of all students is ', student_num)
-        pdb.set_trace()
         csvFile.close()
 
 
