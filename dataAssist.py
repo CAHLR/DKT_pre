@@ -45,7 +45,7 @@ class DataAssistMatrix():
                 student.ID = student.ID[:self.longest]
                 student.correct = student.correct[:self.longest]
                 trainData.append(student)
-            if len(trainData) % 100 == 0:
+            if len(trainData) % 1000 == 0:
                 print ('The length of train data is now ',len(trainData))
             totalAnswers = totalAnswers + student.n_answers
         self.trainData = trainData

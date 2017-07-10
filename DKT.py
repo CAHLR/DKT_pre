@@ -61,7 +61,7 @@ class TestCallback(Callback):
             if response != 0:
                 acc.append(correct/float(response))
                 rmse.append(sqrt(diff_sq/float(response)))
-        print ('padding_num',padding_num)
+        # print ('padding_num',padding_num)
         try:
             return sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))
         except:
@@ -93,7 +93,7 @@ class TestCallback(Callback):
             if response != 0:
                 acc.append(correct/float(response))
                 rmse.append(sqrt(diff_sq/float(response)))
-        print ('padding_num',padding_num)
+        # print ('padding_num',padding_num)
         try:
             return rmse, acc
             # return sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))

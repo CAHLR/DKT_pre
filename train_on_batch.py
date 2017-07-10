@@ -51,6 +51,9 @@ data.trainData = [] # To save memory.
 DKTmodel = DKTnet(input_dim, input_dim_order, hidden_layer_size, batch_size, epoch)
 DKTmodel.build_train_on_batch()
 
+sum_acc = [] # using for earlystopping
+sum_rmse = []# using for earlystopping
+
 for epo in range(epoch):
     '''Initializing'''
     x_train = []
@@ -58,14 +61,17 @@ for epo in range(epoch):
     y_train_order = []
     num_student = 0 # num of TRAINING student in each epoch
 
-    print ('Now starts the ',epo,'th epoch')
+    print ('Now starts the ',epo+1,'th epoch')
 
     '''Training part starts from now'''
+    random.shuffle(train_data)
+    print('Training data is shuffled')
     for student in train_data:
         num_student += 1
         # print (num_student)
         if num_student % batch_size == 0:
-            print ("Training when num student is",num_student)
+            if num_student % (batch_size*10) == 0:
+                print ("Training when num student is",num_student)
             x_train = np.array(x_train)
             y_train = np.array(y_train)
             y_train_order = np.array(y_train_order)
@@ -124,10 +130,12 @@ for epo in range(epoch):
     rmse = []
     acc = []
     callback = TestCallback()
+
     for student in validation_data:
         num_val += 1
         if num_val % batch_size == 0:
-            print ("Predicting when num student is",num_val)
+            if num_val % (batch_size*10) == 0:
+                print ("Predicting when num student is",num_val)
             x_val = np.array(x_val)
             y_val = np.array(y_val)
             y_val_order = np.array(y_val_order)
@@ -144,8 +152,8 @@ for epo in range(epoch):
             y_val.flatten()
             # y_val is y_true
             tmp_rmse, tmp_acc = callback.rmse_masking_on_batch(y_val, y_pred, y_val_order)
-            rmse.append(tmp_rmse)
-            acc.append(tmp_acc)
+            rmse += (tmp_rmse)
+            acc += (tmp_acc)
             # y_pred_total = y_pred_total + list(y_pred)
             # y_true_total = y_true_total + list(y_val)
 
@@ -184,11 +192,10 @@ for epo in range(epoch):
     avg_rmse, avg_acc = sum(rmse)/float(len(rmse)), sum(acc)/float(len(acc))
     print('\nTesting avg_rmse: {}\n'.format(avg_rmse))
     print('\nTesting avg_acc: {}\n'.format(avg_acc))
-
-
-
-
-
-
-
+    sum_acc.append(avg_acc)
+    sum_rmse.append(avg_rmse)
+    if len(sum_acc)>=3 and sum_acc[-1]<sum_acc[-2] and sum_acc[-2]<sum_acc[-3]: # patience is 2
+        print ('sum_acc:',sum_acc)
+        print ('sum_rmse:', sum_rmse)
+        pdb.set_trace()
 
