@@ -30,7 +30,7 @@ import sys
 
 data = DataAssistMatrix()
 data.build()
-batch_size = 16
+batch_size = 2
 input_dim_order =  int(data.max_questionID + 1)
 input_dim = 2 * input_dim_order
 epoch = 10
