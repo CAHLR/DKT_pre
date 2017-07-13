@@ -11,7 +11,7 @@ class DataAssistMatrix():
     def __init__(self):
         print('Build a DataAssistMatrix')
 
-        self.longest = 100
+        self.longest = 10000 # the longest sequence is adjustable
         self.questions = {}
         self.n_questions = 0 # new ID of questionsID, a dence one.
         self.max_questionID = 0
@@ -20,8 +20,8 @@ class DataAssistMatrix():
     def build(self):
         print('Loading data...')
         #training process
-        root = '../'
-        trainPath = root + 'processed_skill.csv'
+        root = '../../'
+        trainPath = root + 'DKT_atoms4.csv'
         # trainPath = root + 'data/assistments/builder_train.csv'
         csvFile = open(trainPath, 'r')
         csvInput = csv.reader(csvFile)

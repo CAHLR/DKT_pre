@@ -22,7 +22,7 @@ from dataAssist import DataAssistMatrix, student
 #    print("Load students\' data succeeded!")
 data = DataAssistMatrix()
 data.build()
-batch_size = 64
+batch_size = 1
 input_dim_order =  int(data.max_questionID + 1) #consider whether we need plus 1
 input_dim = 2 * input_dim_order
 epoch = 100
