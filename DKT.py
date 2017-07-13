@@ -27,7 +27,7 @@ class TestCallback(Callback):
     def __init__(self, test_data = [[],[],[]]):
         self.x_test, self.y_test_order, self.y_test = test_data
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch, logs={}):
 
         y_pred = self.model.predict([self.x_test, self.y_test_order])
         avg_rmse, avg_acc = self.rmse_masking(self.y_test, y_pred)
