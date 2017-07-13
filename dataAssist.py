@@ -21,7 +21,7 @@ class DataAssistMatrix():
         print('Loading data...')
         #training process
         root = '../../'
-        trainPath = root + 'DKT_atoms4.csv'
+        trainPath = root + 'DKT_atoms.csv'
         # trainPath = root + 'data/assistments/builder_train.csv'
         csvFile = open(trainPath, 'r')
         csvInput = csv.reader(csvFile)
